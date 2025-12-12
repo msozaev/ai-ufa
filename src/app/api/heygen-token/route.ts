@@ -1,10 +1,15 @@
 
 import { NextResponse } from 'next/server';
+import { DEFAULT_AVATAR_ID, DEFAULT_VOICE_ID, DEFAULT_CONTEXT_ID } from '@/lib/heygen';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { avatarId, voiceId, contextId } = body;
+    const {
+      avatarId = DEFAULT_AVATAR_ID,
+      voiceId = DEFAULT_VOICE_ID,
+      contextId = DEFAULT_CONTEXT_ID,
+    } = body;
 
     const apiKey = process.env.LIVEAVATAR_API_KEY;
 
@@ -17,11 +22,11 @@ export async function POST(request: Request) {
 
     const payload = {
       mode: 'FULL',
-      avatar_id: avatarId || DEFAULT_AVATAR_ID,
-      voice_id: voiceId || DEFAULT_VOICE_ID,
+      avatar_id: avatarId,
+      voice_id: voiceId,
       knowledge_id: contextId,
       avatar_persona: {
-        voice_id: voiceId || DEFAULT_VOICE_ID,
+        voice_id: voiceId,
         context_id: contextId,
         language: 'ru',
       },
