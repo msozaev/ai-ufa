@@ -16,6 +16,7 @@ export default function InteractiveAvatar() {
   const [isLoadingSession, setIsLoadingSession] = useState(false)
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false)
   const [isUserSpeaking, setIsUserSpeaking] = useState(false)
+  const [isMuted, setIsMuted] = useState(false)
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string }>>([])
   
   const session = useRef<LiveAvatarSession | null>(null)
@@ -63,6 +64,23 @@ export default function InteractiveAvatar() {
       throw error
     }
   }
+
+  const setMicrophoneMuted = useCallback((shouldMute: boolean) => {
+    if (!session.current) return
+
+    const voiceChat = (session.current as any).voiceChat
+    if (!voiceChat) return
+
+    const track = voiceChat.track
+    if (!track) return
+
+    const mediaTrack = track.mediaStreamTrack || track
+    
+    if (mediaTrack && typeof mediaTrack.enabled !== 'undefined') {
+      mediaTrack.enabled = !shouldMute
+      setIsMuted(shouldMute)
+    }
+  }, [])
 
   const startSession = useCallback(async () => {
     if (isLoadingSession || isSessionActive) return
@@ -124,6 +142,7 @@ export default function InteractiveAvatar() {
 
       session.current.on(AgentEventsEnum.USER_TRANSCRIPTION, (event) => {
         setChatHistory(prev => [...prev, { role: 'user', content: event.text }])
+        setMicrophoneMuted(true)
       })
 
       session.current.on(AgentEventsEnum.AVATAR_TRANSCRIPTION, (event) => {
@@ -139,7 +158,11 @@ export default function InteractiveAvatar() {
     } finally {
       setIsLoadingSession(false)
     }
-  }, [isLoadingSession, isSessionActive])
+  }, [isLoadingSession, isSessionActive, setMicrophoneMuted])
+
+  const toggleMute = useCallback(() => {
+    setMicrophoneMuted(!isMuted)
+  }, [isMuted, setMicrophoneMuted])
 
   const endSession = useCallback(async () => {
     if (!session.current) return
@@ -153,6 +176,7 @@ export default function InteractiveAvatar() {
       setIsSessionActive(false)
       setIsAvatarSpeaking(false)
       setIsUserSpeaking(false)
+      setIsMuted(false)
     }
   }, [])
 
@@ -236,7 +260,24 @@ export default function InteractiveAvatar() {
       )}
 
       {isSessionActive && (
-        <div className="w-full md:max-w-[1080px] flex justify-center pb-2 md:pb-4 -translate-y-2">
+        <div className="w-full md:max-w-[1080px] flex justify-center pb-2 md:pb-4 -translate-y-2 gap-4">
+          <button
+            onClick={toggleMute}
+            className={`${
+              isMuted ? 'bg-slate-500' : 'bg-[#32bff0]'
+            } text-white px-6 py-3 rounded-xl hover:opacity-90 transition-colors flex items-center gap-2`}
+          >
+            {isMuted ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7.7 7.7 0 01-7 7m0 0a7.7 7.7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3zM3 3l18 18" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7.7 7.7 0 01-7 7m0 0a7.7 7.7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+            )}
+            {isMuted ? 'Включить микрофон' : 'Выключить микрофон'}
+          </button>
           <button
             onClick={endSession}
             className="bg-red-500 text-white px-6 py-3 rounded-xl hover:bg-red-600 transition-colors flex items-center gap-2"
