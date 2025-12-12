@@ -1,51 +1,56 @@
-import { NextResponse } from 'next/server'
 
-const HEYGEN_API_KEY = process.env.HEYGEN_API_KEY || ''
+import { NextResponse } from 'next/server';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    if (!HEYGEN_API_KEY) {
-      console.error('HeyGen API key is missing from environment variables')
-      return NextResponse.json(
-        { error: 'HeyGen API key not configured' },
-        { status: 500 }
-      )
+    const body = await request.json();
+    const { avatarId, voiceId, contextId } = body;
+
+    const apiKey = process.env.LIVEAVATAR_API_KEY;
+
+    if (!apiKey) {
+      console.error('API key missing from environment variables');
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    // Get access token from HeyGen
-    const response = await fetch('https://api.heygen.com/v1/streaming.create_token', {
+    console.log('API Key loaded:', apiKey.substring(0, 4) + '...');
+
+    const payload = {
+      mode: 'FULL',
+      avatar_id: avatarId || DEFAULT_AVATAR_ID,
+      avatar_persona: {
+        voice_id: voiceId || DEFAULT_VOICE_ID,
+        context_id: contextId,
+        language: 'ru',
+      },
+    };
+
+    console.log('Sending payload to LiveAvatar:', JSON.stringify(payload, null, 2));
+
+
+    const response = await fetch('https://api.liveavatar.com/v1/sessions/token', {
       method: 'POST',
       headers: {
-        'x-api-key': HEYGEN_API_KEY,
+        'X-API-KEY': apiKey,
         'Content-Type': 'application/json',
       },
-    })
+      body: JSON.stringify(payload),
+    });
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('HeyGen API error:', errorText)
-      return NextResponse.json(
-        { error: 'Failed to get HeyGen token' },
-        { status: response.status }
-      )
+      const errorText = await response.text();
+      console.error('LiveAvatar API Error Status:', response.status);
+      console.error('LiveAvatar API Error Body:', errorText);
+      return NextResponse.json({ error: `LiveAvatar API error: ${response.status} ${errorText}` }, { status: response.status });
     }
 
-    const data = await response.json()
-
-    if (!data.data?.token) {
-      console.error('Invalid response from HeyGen API:', data)
-      return NextResponse.json(
-        { error: 'Invalid response from HeyGen' },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({ token: data.data.token })
+    const data = await response.json();
+    return NextResponse.json({
+      sessionId: data.data.session_id,
+      sessionToken: data.data.session_token,
+    });
   } catch (error) {
-    console.error('Error fetching HeyGen access token:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Error creating session:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
