@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     const payload = {
       mode: 'FULL',
       avatar_id: avatarId || DEFAULT_AVATAR_ID,
+      voice_id: voiceId || DEFAULT_VOICE_ID,
+      knowledge_id: contextId,
       avatar_persona: {
         voice_id: voiceId || DEFAULT_VOICE_ID,
         context_id: contextId,
