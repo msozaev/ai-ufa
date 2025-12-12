@@ -3,6 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Modern display font */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 /* Custom styles with higher specificity */
 :root {
   --primary-blue: #32bff0;
@@ -20,8 +23,8 @@ body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
+  font-family: 'Space Grotesk', 'Inter', 'Segoe UI', system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
 }
 
 body {

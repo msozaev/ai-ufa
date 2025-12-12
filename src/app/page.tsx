@@ -14,18 +14,8 @@ export default function AIPage() {
   }, [])
 
   return (
-    <div className="h-screen bg-gradient-to-b from-white via-[#f5f9ff] to-[#e8f6ff] flex flex-col overflow-hidden">
-      <header className="flex justify-center py-4 px-6 flex-none">
-        <img
-          src="/header_logo.svg"
-          alt="Кампус Уфа"
-          className="h-10 w-auto drop-shadow-sm"
-        />
-      </header>
-
-      <main className="flex-1 flex justify-center items-center px-12 pb-6 overflow-hidden">
-        <InteractiveAvatar />
-      </main>
+    <div className="h-screen w-screen overflow-hidden bg-gradient-to-b from-white via-[#f5f9ff] to-[#e8f6ff] text-white">
+      <InteractiveAvatar />
     </div>
   )
 }
