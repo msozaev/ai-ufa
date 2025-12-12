@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { openaiClient, type ChatCompletionMessage } from '@/lib/openai-client'
+import { geminiModel } from '@/lib/gemini-client'
 import knowledgeBase from '@/data/ufa-knowledge-base.json'
 
 const SUPPORTED_LANGUAGES = ['ru', 'en'] as const
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
 
     language = resolveLanguage(requestedLanguage)
 
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('OpenAI API key is missing')
+    if (!process.env.GOOGLE_API_KEY) {
+      console.error('GOOGLE_API_KEY is missing')
       return NextResponse.json({ response: UNAVAILABLE_MESSAGES[language] })
     }
 
@@ -94,55 +94,29 @@ ${JSON.stringify(knowledgeBase, null, 2)}
 
 Используйте сведения выше, чтобы давать точные и полезные ответы.`
 
-    const messages: ChatCompletionMessage[] = [
-      { role: 'system', content: systemPrompt + knowledgeBaseContext },
-      ...chatHistory.slice(-10).map((msg: any) => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      })),
-      { role: 'user', content: message },
-    ]
+    // Convert chat history to Gemini format
+    const history = chatHistory.slice(-10).map((msg: any) => ({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: msg.content }],
+    }))
 
     try {
-      const completion = await openaiClient.createChatCompletion({
-        model: 'gpt-4o',
-        messages,
-        temperature: 0.8,
-        max_tokens: 300,
-        presence_penalty: 0.6,
-        frequency_penalty: 0.5,
+      // Start a chat session
+      const chat = geminiModel.startChat({
+        history: history,
+        systemInstruction: systemPrompt + knowledgeBaseContext,
       })
 
-      const response = completion.choices[0]?.message?.content || FALLBACK_MESSAGES[language]
+      const result = await chat.sendMessage(message)
+      const response = result.response.text() || FALLBACK_MESSAGES[language]
 
       return NextResponse.json({ response })
-    } catch (openaiError: any) {
-      console.error('OpenAI API error:', openaiError)
-
-      if (openaiError.response?.status === 404 || openaiError.code === 'model_not_found') {
-        console.log('gpt-4o unavailable, falling back to gpt-4-turbo-preview')
-        try {
-          const completion = await openaiClient.createChatCompletion({
-            model: 'gpt-4-turbo-preview',
-            messages,
-            temperature: 0.8,
-            max_tokens: 300,
-            presence_penalty: 0.6,
-            frequency_penalty: 0.5,
-          })
-
-          const response = completion.choices[0]?.message?.content || FALLBACK_MESSAGES[language]
-
-          return NextResponse.json({ response })
-        } catch (fallbackError) {
-          console.error('Fallback model request failed:', fallbackError)
-        }
-      }
-
+    } catch (geminiError: any) {
+      console.error('Gemini API error:', geminiError)
       return NextResponse.json({ response: FALLBACK_MESSAGES[language] })
     }
   } catch (error) {
-    console.error('Error in OpenAI chat route:', error)
+    console.error('Error in Gemini chat route:', error)
     const message = ERROR_MESSAGES[language] || ERROR_MESSAGES[DEFAULT_LANGUAGE]
     return NextResponse.json({ response: message }, { status: 500 })
   }

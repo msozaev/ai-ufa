@@ -236,7 +236,7 @@ export default function InteractiveAvatar() {
           // Already stopped
         }
 
-        // Process with GPT-4o, passing the detected language
+        // Process with Gemini, passing the detected language
         await processUserMessage(text, detectedLang)
       }
 
@@ -369,12 +369,12 @@ export default function InteractiveAvatar() {
     // Add user message to history
     setChatHistory(prev => [...prev, { role: 'user', content: userText }])
 
-    // Process with GPT-4o
+    // Process with Gemini
     try {
       setIsProcessing(true)
 
-      console.log('Sending to GPT-4o API with language:', language)
-      const response = await fetch('/api/openai-chat', {
+      console.log('Sending to Gemini API with language:', language)
+      const response = await fetch('/api/gemini-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -389,7 +389,7 @@ export default function InteractiveAvatar() {
 
       const data = await response.json()
       const aiResponse = data.response
-      console.log('GPT-4o response received:', aiResponse)
+      console.log('Gemini response received:', aiResponse)
 
       // Add AI response to history
       setChatHistory(prev => [...prev, { role: 'assistant', content: aiResponse }])
@@ -397,7 +397,7 @@ export default function InteractiveAvatar() {
       // Select voice ID based on detected language for this response
       const responseVoiceId = language === 'ru' ? VOICE_IDS.ru : VOICE_IDS.default
 
-      // Make avatar speak ONLY our GPT-5 response
+      // Make avatar speak ONLY our Gemini response
       // Note: Voice switching during session may not be supported by HeyGen API
       // The voice will be set at session initialization
       await avatar.current.speak({
@@ -411,7 +411,7 @@ export default function InteractiveAvatar() {
         }
       } as any)
     } catch (error) {
-      console.error('Error processing with GPT-4o:', error)
+      console.error('Error processing with Gemini:', error)
       const errorMessage = 'Извините, произошла ошибка при обработке вашего сообщения.'
       setChatHistory(prev => [...prev, { role: 'assistant', content: errorMessage }])
 
