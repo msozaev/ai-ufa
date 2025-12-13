@@ -1,0 +1,20 @@
+# dependencies
+node_modules
+npm-debug.log*
+
+# production builds
+.next
+out
+
+# env and local
+.env*
+.DS_Store
+
+# tests and coverage
+coverage
+playwright-report
+.cache
+
+# editor
+.vscode
+.idea
