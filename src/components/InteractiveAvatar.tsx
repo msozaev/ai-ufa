@@ -20,7 +20,6 @@ export default function InteractiveAvatar() {
 
   const session = useRef<LiveAvatarSession | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const greetingSentRef = useRef(false)
 
   useEffect(() => {
     return () => {
@@ -68,13 +67,6 @@ export default function InteractiveAvatar() {
       mediaTrack.enabled = !shouldMute
       setIsMuted(shouldMute)
     }
-  }, [])
-
-  const sendRussianGreeting = useCallback(() => {
-    if (!session.current || greetingSentRef.current) return
-    greetingSentRef.current = true
-    session.current.interrupt()
-    session.current.repeat('Здравствуйте! Чем могу помочь?')
   }, [])
 
   const startSession = useCallback(async () => {
@@ -141,14 +133,13 @@ export default function InteractiveAvatar() {
       await session.current.start()
       setIsSessionActive(true)
       setStatusText('Соединение установлено')
-      sendRussianGreeting()
     } catch (error: any) {
       console.error('Failed to start avatar session:', error)
       setStatusText('Ошибка подключения')
     } finally {
       setIsLoadingSession(false)
     }
-  }, [isLoadingSession, isSessionActive, setMicrophoneMuted, sendRussianGreeting])
+  }, [isLoadingSession, isSessionActive, setMicrophoneMuted])
 
   const toggleMute = useCallback(() => {
     setMicrophoneMuted(!isMuted)
@@ -170,7 +161,6 @@ export default function InteractiveAvatar() {
       setIsAvatarSpeaking(false)
       setIsUserSpeaking(false)
       setIsMuted(false)
-      greetingSentRef.current = false
       setStatusText('Готов к запуску')
     }
   }, [])
