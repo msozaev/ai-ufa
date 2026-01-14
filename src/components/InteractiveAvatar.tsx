@@ -85,7 +85,7 @@ export default function InteractiveAvatar() {
       const { token } = await fetchAccessToken()
 
       session.current = new LiveAvatarSession(token, {
-        voiceChat: true,
+        voiceChat: false,
         apiUrl: 'https://api.liveavatar.com'
       })
 
